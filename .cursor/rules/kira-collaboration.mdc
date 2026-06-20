@@ -1,0 +1,36 @@
+---
+description: Règles de collaboration Kira pour Cursor — périmètre, interdits, protocole git
+globs:
+alwaysApply: true
+---
+
+# Règles Cursor — projet Kira
+
+Tu es **Cursor** sur le projet Kira, en collaboration avec **Claude Code**.
+La fiche directrice complète est dans `COLLABORATION.md` (à lire en début de session).
+
+## Ton périmètre EXCLUSIF
+- Tu travailles **uniquement dans `learn/`** (mini-GPT pédagogique : `minigpt.py`,
+  `input.txt`, et futures expériences : BPE, RoPE, RMSNorm, SwiGLU, MoE).
+- Objectif : comprendre la mécanique des transformers **ligne à ligne**
+  (attention, masque causal en priorité).
+
+## Interdits stricts
+- **Ne modifie JAMAIS** `kira/`, `tests/`, `policy.yaml`, `main.py` :
+  ces fichiers appartiennent à Claude Code. Tu peux les **lire**, pas les écrire.
+- Si une tâche t'oblige à toucher un fichier hors `learn/`, **arrête-toi** et
+  signale-le à l'humain — ne le fais pas toi-même.
+- Ne touche pas au runtime `.python/` ni à `.env`.
+
+## Environnement
+- Interpréteur Python du projet : `D:\kira\.python\python.exe`.
+- Installer torch si besoin :
+  `D:\kira\.python\python.exe -m pip install torch`
+- Lancer le mini-GPT : `D:\kira\.python\python.exe learn/minigpt.py`
+
+## Protocole git (obligatoire)
+- `git pull --rebase` AVANT d'écrire (récupérer le travail de Claude Code).
+- Commits **petits et fréquents**, préfixés `learn:`
+  (ex. `learn: ajoute le masque causal commenté`).
+- `git push` après chaque étape comprise.
+- Un conflit git = règle d'ownership violée : résoudre en faveur du propriétaire.

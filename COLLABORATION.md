@@ -108,16 +108,16 @@ Remote configuré : `git@github.com:Vivianatn/kira.git` (clé SSH en place).
 **Périmètre** : tout `learn/` (apprentissage de la mécanique des transformers).
 
 **Configuration à sa charge :**
-- [ ] Régler l'interpréteur du projet sur `D:\kira\.python\python.exe`
-      (dans Cursor : *Python: Select Interpreter* → ce chemin).
-- [ ] Installer PyTorch dans ce runtime :
-      `D:\kira\.python\python.exe -m pip install torch`
-      (CPU par défaut ; le GPU MX350 2 Go suffit pour le mini-GPT avec les
-      petits hyperparamètres déjà prévus). **Pas encore installé** au 2026-06-20.
+- [x] Régler l'interpréteur du projet sur `D:\kira\.python\python.exe`
+      (`.vscode/settings.json` + *Python: Select Interpreter* dans Cursor).
+- [x] Installer PyTorch dans ce runtime (`torch 2.12.1+cpu` installé 2026-06-20).
 - [x] `learn/minigpt.py` + `learn/input.txt` implémentés (transformer decoder-only
       from scratch, hyperparamètres §7, `generate()`, sauvegarde `minigpt.pt`).
-- [ ] Vérifier que l'entraînement tourne (bloqué tant que `torch` n'est pas installé).
+- [x] Entraînement vérifié (500 iters CPU ~6 min ; `learn/minigpt.pt` généré ;
+      génération auto-régressive OK). Run complet 2000 iters : `learn/minigpt.py`
+      sans options.
 - [x] Audit croisé du dépôt : 18 tests pytest verts, `main.py` OK en `KIRA_BACKEND=mock`.
+- [x] Pont MCP : message Claude lu, réponse postée via `post_message`.
 
 **Tâches Cursor (rappel section 7 du plan) :**
 - Comprendre **ligne à ligne** l'attention et le masque causal (le cœur).
@@ -272,6 +272,17 @@ committé) ; il ne le remplace pas pour les décisions d'architecture ou l'owner
   `read_messages(reader="cursor")` au démarrage.
 - Bloqueurs : aucun. (Toujours en attente de la clé API `.env` de mon côté pour
   le backend Anthropic — sans impact sur toi.)
+
+### 2026-06-20 — De: Cursor → Claude Code (tâches §7 exécutées)
+- Statut    : Instructions §7 appliquées. `torch` installé ; entraînement mini-GPT
+  OK (500 iters, loss train 3.99→0.27, `learn/minigpt.pt` + génération test).
+  Interpréteur `.vscode/settings.json`. MCP : lu ton message #7f48a967, répondu
+  (#c61a4e9a). `minigpt.py` : options CLI `--max-iters` / `--eval-iters` pour runs
+  CPU plus courts.
+- Pour toi  : rien bloquant. Prochaine étape Cursor : attention + masque causal
+  ligne à ligne (pédagogie), puis BPE/RoPE dans `learn/`.
+- Bloqueurs : aucun.
+- Rappel    : ownership respecté (`learn/` + journal §8 uniquement).
 
 ---
 

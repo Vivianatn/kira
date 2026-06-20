@@ -272,7 +272,11 @@ def estimate_loss(
 # Boucle d'entraînement
 # ---------------------------------------------------------------------------
 
-def train() -> tuple[MiniGPT, dict[str, int], dict[int, str]]:
+def train(
+    max_iters: int = MAX_ITERS,
+    eval_interval: int = EVAL_INTERVAL,
+    eval_iters: int = EVAL_ITERS,
+) -> tuple[MiniGPT, dict[str, int], dict[int, str]]:
     if not INPUT_PATH.exists():
         raise FileNotFoundError(f"Corpus introuvable : {INPUT_PATH}")
 
@@ -284,19 +288,20 @@ def train() -> tuple[MiniGPT, dict[str, int], dict[int, str]]:
     n = int(0.9 * len(data))
     train_data, val_data = data[:n], data[n:]
 
-    print(f"Corpus : {len(text)} caractères, vocabulaire : {vocab_size} tokens")
-    print(f"Device : {DEVICE}")
+    print(f"Corpus : {len(text)} caractères, vocabulaire : {vocab_size} tokens", flush=True)
+    print(f"Device : {DEVICE}", flush=True)
 
     model = MiniGPT(vocab_size).to(DEVICE)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
 
-    for step in range(MAX_ITERS):
-        if step % EVAL_INTERVAL == 0 or step == MAX_ITERS - 1:
+    for step in range(max_iters):
+        if step % eval_interval == 0 or step == max_iters - 1:
             losses = estimate_loss(
-                model, train_data, val_data, BLOCK_SIZE, BATCH_SIZE, EVAL_ITERS, DEVICE
+                model, train_data, val_data, BLOCK_SIZE, BATCH_SIZE, eval_iters, DEVICE
             )
             print(
-                f"step {step:4d} | train loss {losses['train']:.4f} | val loss {losses['val']:.4f}"
+                f"step {step:4d} | train loss {losses['train']:.4f} | val loss {losses['val']:.4f}",
+                flush=True,
             )
 
         xb, yb = get_batch(train_data, BLOCK_SIZE, BATCH_SIZE, DEVICE)
@@ -318,7 +323,7 @@ def train() -> tuple[MiniGPT, dict[str, int], dict[int, str]]:
         },
     }
     torch.save(checkpoint, MODEL_PATH)
-    print(f"Modèle sauvegardé : {MODEL_PATH}")
+    print(f"Modèle sauvegardé : {MODEL_PATH}", flush=True)
 
     return model, stoi, itos
 
@@ -361,12 +366,34 @@ def main() -> None:
     parser.add_argument("--prompt", type=str, default="Kira", help="Texte de départ")
     parser.add_argument("--max-tokens", type=int, default=200, help="Tokens à générer")
     parser.add_argument("--temperature", type=float, default=0.8, help="Température")
+    parser.add_argument(
+        "--max-iters",
+        type=int,
+        default=MAX_ITERS,
+        help="Itérations d'entraînement (défaut: hyperparamètre du fichier)",
+    )
+    parser.add_argument(
+        "--eval-interval",
+        type=int,
+        default=EVAL_INTERVAL,
+        help="Afficher la loss tous les N pas",
+    )
+    parser.add_argument(
+        "--eval-iters",
+        type=int,
+        default=EVAL_ITERS,
+        help="Batches pour estimer train/val loss",
+    )
     args = parser.parse_args()
 
     if args.generate:
         run_generate(args.prompt, args.max_tokens, args.temperature)
     else:
-        train()
+        train(
+            max_iters=args.max_iters,
+            eval_interval=args.eval_interval,
+            eval_iters=args.eval_iters,
+        )
 
 
 if __name__ == "__main__":

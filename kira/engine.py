@@ -199,51 +199,103 @@ class AnthropicBackend:
 
 
 # --------------------------------------------------------------------------- #
-# Backend Ollama (modèle local) — expérimental, texte seul pour l'instant
+# Backend Ollama (modèle local) — avec tool calling
 # --------------------------------------------------------------------------- #
 class OllamaBackend:
     """Backend local via Ollama (http://localhost:11434).
 
-    Implémentation MINIMALE : génération de texte uniquement, sans tool calling
-    structuré (Ollama gère les outils différemment selon les modèles). Suffisant
-    pour expérimenter le dialogue hors-ligne. À enrichir en phase ultérieure.
+    Supporte le **tool calling** pour les modèles compatibles (qwen2.5, llama3.1,
+    mistral-nemo...). Traduit le format de messages interne et les schémas
+    d'outils (format Anthropic) vers l'API `/api/chat` d'Ollama, et reconvertit
+    les `tool_calls` de la réponse en `ToolCall`.
+
+    ⚠️ Tourne en local sur CPU pour ce projet (GPU 2 Go trop petit) : prévoir des
+    réponses lentes. Le timeout est donc large.
     """
 
     def __init__(
         self,
-        model: str = "llama3.2:3b",
+        model: str = "qwen2.5:3b",
         *,
         host: str | None = None,
+        timeout: int = 600,
     ) -> None:
         self.model = model
         self.host = host or os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+        self.timeout = timeout
 
     def generate(self, system, messages, tools) -> EngineResponse:
-        api_messages = []
+        api_messages: list[dict[str, Any]] = []
         if system:
             api_messages.append({"role": "system", "content": system})
-        for m in messages:
-            if m["role"] == "tool":
-                api_messages.append(
-                    {"role": "tool", "content": str(m.get("content", ""))}
-                )
-            else:
-                api_messages.append(
-                    {"role": m["role"], "content": str(m.get("content", ""))}
-                )
-        payload = json.dumps(
-            {"model": self.model, "messages": api_messages, "stream": False}
-        ).encode("utf-8")
+        api_messages.extend(self._to_ollama(m) for m in messages)
+
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": api_messages,
+            "stream": False,
+        }
+        if tools:
+            payload["tools"] = [self._tool_to_ollama(t) for t in tools]
+
         req = urllib.request.Request(
             f"{self.host}/api/chat",
-            data=payload,
+            data=json.dumps(payload).encode("utf-8"),
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=self.timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-        text = data.get("message", {}).get("content", "")
-        return EngineResponse(text=text, stop_reason="end_turn", raw=data)
+
+        message = data.get("message", {})
+        text = message.get("content", "") or ""
+        tool_calls: list[ToolCall] = []
+        for i, tc in enumerate(message.get("tool_calls", []) or []):
+            fn = tc.get("function", {})
+            args = fn.get("arguments", {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except json.JSONDecodeError:
+                    args = {}
+            tool_calls.append(
+                ToolCall(id=f"ollama_call_{i}", name=fn.get("name", ""), input=args)
+            )
+        return EngineResponse(
+            text=text,
+            tool_calls=tool_calls,
+            stop_reason="tool_use" if tool_calls else "end_turn",
+            raw=data,
+        )
+
+    @staticmethod
+    def _tool_to_ollama(tool: dict[str, Any]) -> dict[str, Any]:
+        """Schéma d'outil Anthropic -> format 'function' d'Ollama."""
+        return {
+            "type": "function",
+            "function": {
+                "name": tool["name"],
+                "description": tool.get("description", ""),
+                "parameters": tool.get("input_schema", {}),
+            },
+        }
+
+    @staticmethod
+    def _to_ollama(msg: dict[str, Any]) -> dict[str, Any]:
+        """Message interne -> format Ollama."""
+        role = msg["role"]
+        if role == "tool":
+            # Ollama porte les résultats d'outils dans un message role='tool'.
+            return {"role": "tool", "content": str(msg.get("content", ""))}
+        if role == "assistant":
+            out: dict[str, Any] = {"role": "assistant", "content": msg.get("content", "")}
+            calls = msg.get("tool_calls", [])
+            if calls:
+                out["tool_calls"] = [
+                    {"function": {"name": c.name, "arguments": c.input}} for c in calls
+                ]
+            return out
+        return {"role": "user", "content": str(msg.get("content", ""))}
 
 
 # --------------------------------------------------------------------------- #

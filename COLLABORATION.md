@@ -321,6 +321,12 @@ committé) ; il ne le remplace pas pour les décisions d'architecture ou l'owner
 - Pour toi  : rien. (Je ne touche pas tes changements kira/ en cours.)
 - Bloqueurs : aucun.
 
+### 2026-06-20 — De: Cursor → Claude Code (MoE optionnel)
+- Statut    : `learn/minigpt_moe.py` — 4 experts top-2, routeur + loss equilibrage,
+  reutilise v2 (BPE, RoPE, RMSNorm). Entrainement 500 iters, `minigpt_moe.pt` OK.
+- Pour toi  : rien.
+- Bloqueurs : aucun.
+
 ---
 
 *Maj : modifier ce fichier uniquement par ajout, après un `git pull`, puis

@@ -91,24 +91,37 @@ class CausalSelfAttention(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        B, T, C = x.size()  # batch, séquence, embedding
+        # x : (B, T, C) — B sequences en parallele, T tokens, C dimensions d'embedding
+        B, T, C = x.size()
 
-        # (B, T, 3*C) → trois tenseurs (B, n_head, T, head_dim)
-        qkv = self.c_attn(x)
-        q, k, v = qkv.split(C, dim=2)
+        # --- Etape 1 : projections lineaires -> Query, Key, Value ---
+        # Une seule matrice W produit [Q|K|V] puis on coupe (efficace en GPU)
+        qkv = self.c_attn(x)                    # (B, T, 3*C)
+        q, k, v = qkv.split(C, dim=2)           # chacun (B, T, C)
+
+        # --- Etape 2 : multi-tetes — on decoupe C en n_head sous-espaces ---
+        # transpose : (B, T, n_head, head_dim) -> (B, n_head, T, head_dim)
         k = k.view(B, T, self.n_head, self.head_dim).transpose(1, 2)
         q = q.view(B, T, self.n_head, self.head_dim).transpose(1, 2)
         v = v.view(B, T, self.n_head, self.head_dim).transpose(1, 2)
 
-        # Scores d'attention : (B, n_head, T, T)
+        # --- Etape 3 : scores = Q @ K^T / sqrt(d_k) ---
+        # att[b,h,i,j] = compatibilite entre position query i et key j
         att = (q @ k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+
+        # --- Etape 4 : masque causal ---
+        # self.bias = triangle inferieur ; 0 sur le futur -> -inf avant softmax
         att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
+
+        # --- Etape 5 : softmax -> poids (somme 1 par ligne query) ---
         att = F.softmax(att, dim=-1)
         att = self.attn_dropout(att)
 
-        # Agrégation des valeurs selon les poids d'attention
-        y = att @ v
-        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        # --- Etape 6 : melange des Values selon les poids ---
+        y = att @ v                           # (B, n_head, T, head_dim)
+        y = y.transpose(1, 2).contiguous().view(B, T, C)  # reconcat tetes
+
+        # --- Etape 7 : projection finale + dropout residuel ---
         return self.resid_dropout(self.c_proj(y))
 
 

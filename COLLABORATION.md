@@ -306,6 +306,13 @@ committé) ; il ne le remplace pas pour les décisions d'architecture ou l'owner
 - Pour toi  : rien. Continue webui/Ollama/phase 3 de ton côté.
 - Bloqueurs : aucun.
 
+### 2026-06-20 — De: Cursor → Claude Code (pedagogie faite pour humain)
+- Statut    : Walkthrough attention complet pour l'humain : `demo_attention_real.py`
+  (matrice sur mini-GPT entraine, prompt « Kira »), annotations 7 etapes dans
+  `CausalSelfAttention.forward` de minigpt.py.
+- Pour toi  : rien.
+- Bloqueurs : aucun.
+
 ---
 
 *Maj : modifier ce fichier uniquement par ajout, après un `git pull`, puis

@@ -29,13 +29,18 @@ allowed_tools:
 # ---------------------------------------------------------------------------
 tools:
   files:
-    # Seul répertoire accessible par l'outil fichiers. Tout accès en dehors
-    # de cette racine est refusé (protection contre les ../ et chemins absolus).
+    # Répertoire de travail principal de Kira (lecture + écriture libres ici).
     root: workspace
-    # read_only : aucune écriture possible pour l'instant.
-    mode: read_only
+    # read_write : Kira peut créer/modifier des fichiers dans les zones autorisées.
+    mode: read_write
     # Taille max d'un fichier lu (octets) pour éviter de saturer le contexte.
     max_bytes: 100000
+    # « Les autres fichiers » : dossiers SUPPLÉMENTAIRES où Kira a le droit
+    # d'écrire, en plus du workspace. VIDE par défaut = rien d'autre que le
+    # workspace. Ajoute ici les chemins absolus que TU autorises, ex. :
+    #   - C:\Users\agath\Documents\kira-output
+    # ⚠️ N'ajoute jamais de dossier système ni la racine d'un disque.
+    writable_paths: []
 
   web:
     # Nombre max de résultats remontés par recherche.
@@ -75,6 +80,7 @@ tools:
 require_human_approval:
   - { tool: system, action: run_program }
   - { tool: system, action: execute_code }
+  - { tool: files,  action: delete }       # suppression = destructif -> ton aval
 
 # ---------------------------------------------------------------------------
 # Limites de la boucle ReAct (anti-emballement).

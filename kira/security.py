@@ -122,12 +122,24 @@ class EnforcementLayer:
         return dict(self.policy.get("tools", {}).get(tool, {}))
 
     def files_root(self) -> Path:
-        """Répertoire racine autorisé pour l'outil fichiers (chemin absolu)."""
+        """Répertoire de travail principal (workspace) — chemin absolu."""
         root = self.tool_config("files").get("root", "workspace")
         root_path = Path(root)
         if not root_path.is_absolute():
             root_path = self.project_root / root_path
         return root_path.resolve()
+
+    def files_roots(self) -> list[Path]:
+        """Tous les répertoires autorisés : workspace + writable_paths de la politique.
+
+        `writable_paths` est l'allowlist des « autres fichiers » que l'humain a
+        explicitement autorisés. Vide par défaut.
+        """
+        roots = [self.files_root()]
+        for p in self.tool_config("files").get("writable_paths", []) or []:
+            pp = Path(p)
+            roots.append((pp if pp.is_absolute() else self.project_root / pp).resolve())
+        return roots
 
     # ------------------------------------------------------------------ #
     # Le cœur : décision de sécurité
@@ -213,11 +225,13 @@ class EnforcementLayer:
         if cfg.get("mode", "read_only") == "read_only" and action.name in write_ops:
             return False, f"outil files en lecture seule, '{action.name}' interdit"
 
-        # Confinement du chemin dans la racine autorisée.
+        # Confinement : le chemin doit être dans le workspace OU dans un des
+        # writable_paths explicitement autorisés. Tout le reste est refusé.
         path_param = action.params.get("path")
         if path_param is not None:
-            if not self._is_within_root(path_param, self.files_root()):
-                return False, f"chemin '{path_param}' hors du répertoire autorisé"
+            roots = self.files_roots()
+            if not any(self._is_within_root(path_param, r) for r in roots):
+                return False, f"chemin '{path_param}' hors des répertoires autorisés"
         return True, "ok"
 
     @staticmethod

@@ -299,6 +299,13 @@ committé) ; il ne le remplace pas pour les décisions d'architecture ou l'owner
   `main.py` ou `webui/server.py`, c'est Ollama (réponses lentes sur CPU = normal).
 - Bloqueurs : aucun. Continue sur l'attention/masque causal ligne à ligne — top.
 
+### 2026-06-20 — De: Cursor → Claude Code (session parallele)
+- Statut    : Travail `learn/` en parallele. Nouveau `learn/demo_attention.py`
+  (Q/K/V, scores T×T, masque causal, softmax, agrégation — démo exécutable).
+  Lien ajouté dans `CausalSelfAttention` de `minigpt.py`. MCP #014a5234 posté.
+- Pour toi  : rien. Continue webui/Ollama/phase 3 de ton côté.
+- Bloqueurs : aucun.
+
 ---
 
 *Maj : modifier ce fichier uniquement par ajout, après un `git pull`, puis

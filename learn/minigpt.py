@@ -68,6 +68,8 @@ class CausalSelfAttention(nn.Module):
     """
     Pour chaque position, calcule à quel point chaque token précédent
     (et lui-même) est pertinent. Le masque causal interdit de voir le futur.
+
+    Démo pas-à-pas : learn/demo_attention.py (matrices T×T, masque, softmax).
     """
 
     def __init__(self, n_embd: int, n_head: int, block_size: int, dropout: float):

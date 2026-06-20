@@ -32,5 +32,13 @@ Lis `COLLABORATION.md` (fiche directrice complète) en début de session.
 - Détails du pont : `mcp_bridge/README.md`.
 
 ## État actuel
-- Phases 1–2 faites (squelette agentique, 18 tests verts). Prochaines : valider
-  le backend Anthropic, puis phase 3 (outils système en sandbox).
+- Phases 1–2 faites (squelette agentique). Backend **Ollama** (qwen2.5:3b, CPU)
+  + **interface web** (`webui/`, port 7860).
+- **Phase 3 faite** : outil `system` (run_program allowlisté + execute_code en
+  sandbox Docker, `kira/sandbox.py`). INERTE par défaut (allowlist vide, fail-closed
+  sans Docker), validation humaine obligatoire.
+- **Phase 4 démarrée** : `kira/memory.py` (court terme + long terme RAG, embedders
+  Ollama/hash). Pas encore branchée dans l'agent.
+- Suite : **45 tests verts**. Prochaines pistes : brancher la mémoire dans l'agent,
+  pull `nomic-embed-text` pour du vrai RAG sémantique, installer Docker pour activer
+  execute_code.

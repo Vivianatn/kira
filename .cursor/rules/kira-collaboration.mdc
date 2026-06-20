@@ -34,3 +34,13 @@ La fiche directrice complète est dans `COLLABORATION.md` (à lire en début de 
   (ex. `learn: ajoute le masque causal commenté`).
 - `git push` après chaque étape comprise.
 - Un conflit git = règle d'ownership violée : résoudre en faveur du propriétaire.
+
+## Communication avec Claude Code (via COLLABORATION.md §8)
+- **En début de session** : après le `git pull`, lis la section 8 « Canal de
+  communication » de `COLLABORATION.md` et applique les messages qui te sont
+  adressés (De: Claude Code → Cursor).
+- **En fin de session** : **ajoute** un message en bas du journal §8 (format
+  donné dans le fichier : Statut / Pour toi / Bloqueurs), puis commit + push.
+- **Append-only** : n'édite jamais un message existant. `COLLABORATION.md` est
+  le seul fichier hors `learn/` que tu as le droit de modifier, et uniquement
+  par ajout dans la section 8.

@@ -157,6 +157,54 @@ n'est activé tant que la couche de sécurité de la phase 3 (sandbox + allowlis
 
 ---
 
+## 8. Canal de communication (journal de relève)
+
+Ce fichier est **le canal d'échange asynchrone** entre Cursor et Claude Code.
+Comme on ne tourne jamais les deux en même temps, on se laisse des messages ici
+et on se synchronise par git.
+
+**Protocole :**
+- En **début de session** : `git pull --rebase`, puis **lire les messages
+  ci-dessous** (du plus ancien en haut au plus récent en bas).
+- En **fin de session** : **ajouter un nouveau message en bas** (statut + ce que
+  tu as fait + ce que tu attends de l'autre), puis `git commit` + `git push`.
+- **Append-only** : on n'édite jamais un message passé, on en ajoute un nouveau.
+- Format d'un message :
+
+```
+### AAAA-MM-JJ — De: <Claude Code|Cursor> → <destinataire>
+- Statut    : ce qui a été fait / l'état courant
+- Pour toi  : ce que l'autre doit faire (ou « rien »)
+- Bloqueurs : ce qui empêche d'avancer (ou « aucun »)
+```
+
+> ⚠️ Limites à garder en tête : c'est **asynchrone** (l'autre ne voit ton message
+> qu'après son `git pull`) et **aucun outil n'a d'initiative** — l'humain
+> déclenche chaque session. Ce canal sert à la relève, pas au temps réel.
+
+---
+
+### 2026-06-20 — De: Claude Code → Cursor
+- Statut    : Phase 2 terminée et poussée (commit initial `70d187a`). Le cœur
+  agentique (`kira/`) tourne, 18 tests verts. Infra prête : interpréteur
+  `D:\kira\.python\python.exe`, dépôt + remote SSH configurés.
+- Pour toi  : tu peux démarrer la Phase 1 dans `learn/` (le fichier
+  `learn/minigpt.py` existe déjà). Étapes :
+  1. Régler l'interpréteur du projet sur `D:\kira\.python\python.exe`.
+  2. `D:\kira\.python\python.exe -m pip install torch`.
+  3. Lancer l'entraînement, puis **comprendre l'attention + le masque causal
+     ligne à ligne** (cf. PROJET_KIRA.md §7 pour le détail de la tâche).
+  4. Quand c'est solide : Phase 2 conceptuelle (BPE via tiktoken, RoPE, RMSNorm,
+     SwiGLU) — **toujours dans `learn/`**.
+- Bloqueurs : aucun pour toi. (De mon côté, j'attends la clé API dans `.env`
+  pour valider le backend Anthropic — sans impact sur ton travail.)
+- Rappel    : ne touche pas à `kira/`, `tests/`, `policy.yaml`, `main.py`
+  (lecture seule). Commits préfixés `learn:`.
+
+<!-- Cursor : ajoute ta réponse en dessous de cette ligne, ne modifie pas le message ci-dessus -->
+
+---
+
 *Maj : modifier ce fichier uniquement par ajout, après un `git pull`, puis
 commit immédiat. En cas de doute sur « à qui appartient ce fichier », se référer
 au tableau §1.*

@@ -30,6 +30,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from kira.agent import Agent  # noqa: E402
 from kira.engine import Engine  # noqa: E402
+from kira.memory import build_memory  # noqa: E402
 from kira.security import EnforcementLayer  # noqa: E402
 
 HOST = "127.0.0.1"
@@ -39,7 +40,8 @@ INDEX_HTML = (Path(__file__).parent / "index.html").read_text(encoding="utf-8")
 # Construction unique de l'agent (moteur lu depuis .env : Ollama, Anthropic...).
 _security = EnforcementLayer(policy_path=PROJECT_ROOT / "policy.yaml")
 _engine = Engine.from_config()
-_agent = Agent(_engine, _security)
+_memory = build_memory(store_path=PROJECT_ROOT / ".kira_memory" / "store.jsonl")
+_agent = Agent(_engine, _security, memory=_memory)
 
 
 class KiraHandler(BaseHTTPRequestHandler):

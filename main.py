@@ -26,6 +26,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 from kira.agent import Agent
 from kira.engine import Engine
+from kira.memory import build_memory
 from kira.security import EnforcementLayer
 
 
@@ -40,7 +41,12 @@ def console_approval(tool_name: str, params: dict[str, Any]) -> bool:
 def build_agent() -> Agent:
     security = EnforcementLayer(policy_path="policy.yaml")
     engine = Engine.from_config()
-    return Agent(engine, security, approval_handler=console_approval)
+    # Mémoire persistante (store local, gitignoré). Kira se souvient d'une
+    # session à l'autre et rappelle les souvenirs pertinents (RAG).
+    memory = build_memory(store_path=".kira_memory/store.jsonl")
+    return Agent(
+        engine, security, approval_handler=console_approval, memory=memory
+    )
 
 
 def run_once(agent: Agent, prompt: str) -> None:

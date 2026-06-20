@@ -18,11 +18,14 @@ messages neutre de `engine.py`.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from kira.engine import Engine, EngineResponse, ToolCall
 from kira.security import EnforcementLayer, SecurityError
 from kira.tools import Tool, build_registry, tool_schemas
+
+if TYPE_CHECKING:
+    from kira.memory import Memory
 
 
 # Un gestionnaire d'approbation reçoit (tool_name, params) et renvoie True/False.
@@ -68,6 +71,8 @@ class Agent:
         tools: dict[str, Tool] | None = None,
         max_steps: int | None = None,
         approval_handler: ApprovalHandler | None = None,
+        memory: "Memory | None" = None,
+        recall_k: int = 3,
     ) -> None:
         self.engine = engine
         self.security = security
@@ -75,9 +80,26 @@ class Agent:
         self.max_steps = max_steps if max_steps is not None else security.max_steps
         self.approval_handler = approval_handler or deny_all_approvals
         self._schemas = tool_schemas(self.tools)
+        # Mémoire optionnelle : court terme (conversation) + long terme (RAG).
+        self.memory = memory
+        self.recall_k = recall_k
 
     def run(self, user_input: str) -> AgentResult:
-        messages: list[dict[str, Any]] = [{"role": "user", "content": user_input}]
+        messages: list[dict[str, Any]] = []
+        recalled = ""
+
+        if self.memory is not None:
+            # Court terme : on rejoue la conversation précédente comme contexte.
+            messages.extend(self.memory.conversation())
+            # Long terme (RAG) : souvenirs pertinents pour cette requête.
+            recalled = self.memory.recall_as_text(user_input, k=self.recall_k)
+
+        # On augmente le message courant avec les souvenirs rappelés (s'il y en a),
+        # sans polluer ce qu'on stockera ensuite (on garde le texte brut à part).
+        user_content = user_input
+        if recalled:
+            user_content = f"[Mémoire]\n{recalled}\n\n[Message]\n{user_input}"
+        messages.append({"role": "user", "content": user_content})
         steps: list[Step] = []
 
         for i in range(self.max_steps):
@@ -87,6 +109,7 @@ class Agent:
             # Réponse finale : pas d'appel d'outil -> on s'arrête.
             if response.is_final:
                 steps.append(step)
+                self._remember(user_input, response.text)
                 return AgentResult(
                     answer=response.text, steps=steps, stopped_reason="final"
                 )
@@ -117,11 +140,18 @@ class Agent:
             steps.append(step)
 
         # Limite de pas atteinte sans réponse finale.
-        return AgentResult(
-            answer="(arrêt : limite de pas atteinte sans réponse finale)",
-            steps=steps,
-            stopped_reason="max_steps",
-        )
+        answer = "(arrêt : limite de pas atteinte sans réponse finale)"
+        self._remember(user_input, answer)
+        return AgentResult(answer=answer, steps=steps, stopped_reason="max_steps")
+
+    def _remember(self, user_input: str, answer: str) -> None:
+        """Persiste l'échange en mémoire (court terme + long terme), si activée."""
+        if self.memory is None:
+            return
+        self.memory.add_turn("user", user_input)
+        self.memory.add_turn("assistant", answer)
+        # Souvenir long terme de l'échange, récupérable plus tard par RAG.
+        self.memory.remember(f"Q: {user_input}\nR: {answer}", kind="exchange")
 
     # ------------------------------------------------------------------ #
     # Traitement d'un appel d'outil : LE point de contrôle sécurité.

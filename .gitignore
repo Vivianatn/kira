@@ -18,6 +18,9 @@ venv/
 # Store de messages du pont MCP (données runtime, local à la machine)
 mcp_bridge/.data/
 
+# Mémoire long terme de Kira (souvenirs locaux, non versionnés)
+.kira_memory/
+
 # Modèles entraînés
 *.pt
 

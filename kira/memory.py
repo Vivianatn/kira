@@ -268,3 +268,29 @@ class Memory:
             return ""
         lines = [f"- {h.text}" for h in hits]
         return "Souvenirs pertinents :\n" + "\n".join(lines)
+
+
+def build_memory(
+    store_path: str | Path | None = None,
+    *,
+    max_turns: int = 20,
+) -> Memory:
+    """Construit une `Memory` selon la config (variables d'environnement).
+
+        KIRA_EMBEDDER    : "hash" (défaut, offline) | "ollama"
+        KIRA_EMBED_MODEL : modèle d'embedding Ollama (défaut nomic-embed-text)
+
+    Par défaut on prend HashEmbedder (aucune dépendance, fonctionne hors-ligne).
+    Bascule sur Ollama dès que tu as `ollama pull nomic-embed-text`.
+    """
+    import os
+
+    name = os.environ.get("KIRA_EMBEDDER", "hash").lower()
+    if name == "ollama":
+        embedder: Embedder = OllamaEmbedder(
+            model=os.environ.get("KIRA_EMBED_MODEL", "nomic-embed-text"),
+            host=os.environ.get("OLLAMA_HOST") or None,
+        )
+    else:
+        embedder = HashEmbedder()
+    return Memory(embedder=embedder, store_path=store_path, max_turns=max_turns)

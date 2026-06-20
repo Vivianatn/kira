@@ -105,3 +105,43 @@ def test_memory_facade():
 def test_recall_as_text_empty():
     mem = Memory(embedder=HashEmbedder())
     assert mem.recall_as_text("rien") == ""
+
+
+# --------------------------------------------------------------------------- #
+# Intégration agent <-> mémoire
+# --------------------------------------------------------------------------- #
+def test_agent_persists_and_replays_conversation(security):
+    from kira.agent import Agent
+    from kira.engine import Engine, EngineResponse, MockBackend
+
+    backend = MockBackend(responses=[EngineResponse(text="ok", tool_calls=[])])
+    mem = Memory(embedder=HashEmbedder())
+    agent = Agent(Engine(backend), security, memory=mem)
+
+    agent.run("Je m'appelle Vivian")
+    # L'échange est enregistré en court terme (user + assistant).
+    assert len(mem.conversation()) == 2
+
+    agent.run("autre question")
+    # Le 2e appel au moteur doit contenir la conversation précédente.
+    sent = " ".join(
+        m["content"] for m in backend.calls[-1]["messages"] if isinstance(m.get("content"), str)
+    )
+    assert "Vivian" in sent
+
+
+def test_agent_injects_rag_recall(security):
+    from kira.agent import Agent
+    from kira.engine import Engine, EngineResponse, MockBackend
+
+    backend = MockBackend(responses=[EngineResponse(text="ok", tool_calls=[])])
+    mem = Memory(embedder=HashEmbedder())
+    mem.remember("La couleur préférée de Vivian est le bleu")
+    agent = Agent(Engine(backend), security, memory=mem)
+
+    agent.run("Quelle est la couleur préférée ?")
+    sent = " ".join(
+        m["content"] for m in backend.calls[-1]["messages"] if isinstance(m.get("content"), str)
+    )
+    # Le souvenir pertinent (partage « couleur préférée ») est injecté.
+    assert "bleu" in sent

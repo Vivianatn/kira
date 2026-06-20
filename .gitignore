@@ -15,6 +15,9 @@ venv/
 # Runtime Python « embeddable » local (installé hors MSI, non versionné)
 .python/
 
+# Store de messages du pont MCP (données runtime, local à la machine)
+mcp_bridge/.data/
+
 # Modèles entraînés
 *.pt
 

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "kira-bridge": {
+      "command": "D:\\kira\\.python\\python.exe",
+      "args": ["D:\\kira\\mcp_bridge\\server.py"]
+    }
+  }
+}

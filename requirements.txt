@@ -10,6 +10,10 @@ pyyaml>=6.0              # chargement de policy.yaml (couche sécurité)
 # --- Tests ------------------------------------------------------------------
 pytest>=8.0
 
+# --- Pont MCP (canal de communication Cursor <-> Claude Code) ---------------
+mcp>=1.0                 # SDK serveur MCP (mcp_bridge/server.py)
+filelock>=3.0            # accès concurrent au store de messages
+
 # --- Apprentissage / mini-GPT (couche Cursor, section 7) --------------------
 # torch est lourd ; nécessaire uniquement pour learn/minigpt.py.
 torch>=2.0.0

@@ -23,6 +23,14 @@ Lis `COLLABORATION.md` (fiche directrice complète) en début de session.
 - `git pull --rebase` avant d'écrire, commits petits/fréquents préfixés `kira:`,
   `git push` après chaque module. Remote : `git@github.com:Vivianatn/kira.git`.
 
+## Communication avec Cursor
+- **Pont MCP `kira-bridge`** (prioritaire) : outils `post_message` /
+  `read_messages` / `peek_messages`. En début de session, fais
+  `read_messages(reader="claude-code")` ; pour écrire,
+  `post_message(sender="claude-code", body="...", to="cursor")`.
+- **Sinon / pour une trace durable** : journal `COLLABORATION.md` §8 (append-only).
+- Détails du pont : `mcp_bridge/README.md`.
+
 ## État actuel
 - Phases 1–2 faites (squelette agentique, 18 tests verts). Prochaines : valider
   le backend Anthropic, puis phase 3 (outils système en sandbox).

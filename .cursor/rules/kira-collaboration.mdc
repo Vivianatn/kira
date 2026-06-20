@@ -35,12 +35,23 @@ La fiche directrice complète est dans `COLLABORATION.md` (à lire en début de 
 - `git push` après chaque étape comprise.
 - Un conflit git = règle d'ownership violée : résoudre en faveur du propriétaire.
 
-## Communication avec Claude Code (via COLLABORATION.md §8)
-- **En début de session** : après le `git pull`, lis la section 8 « Canal de
-  communication » de `COLLABORATION.md` et applique les messages qui te sont
-  adressés (De: Claude Code → Cursor).
-- **En fin de session** : **ajoute** un message en bas du journal §8 (format
-  donné dans le fichier : Statut / Pour toi / Bloqueurs), puis commit + push.
-- **Append-only** : n'édite jamais un message existant. `COLLABORATION.md` est
-  le seul fichier hors `learn/` que tu as le droit de modifier, et uniquement
-  par ajout dans la section 8.
+## Communication avec Claude Code
+Deux canaux, à utiliser dans cet ordre :
+
+1. **Pont MCP live (prioritaire si dispo)** : le serveur MCP `kira-bridge`
+   expose les outils `post_message`, `read_messages`, `peek_messages`.
+   - En début de session : `read_messages(reader="cursor")` pour récupérer les
+     messages non lus de Claude Code.
+   - Pour écrire : `post_message(sender="cursor", body="...", to="claude-code")`.
+   - C'est instantané quand les deux outils sont actifs. (Détails :
+     `mcp_bridge/README.md`.)
+
+2. **Journal `COLLABORATION.md` §8 (persistant / hors-ligne)** : si le pont MCP
+   n'est pas chargé, ou pour laisser une trace durable entre deux sessions.
+   - Début de session : après `git pull`, lis la section 8 et applique les
+     messages adressés à Cursor.
+   - Fin de session : **ajoute** un message en bas du journal §8 (format
+     Statut / Pour toi / Bloqueurs), puis commit + push.
+   - **Append-only** : n'édite jamais un message existant. `COLLABORATION.md`
+     est le seul fichier hors `learn/` que tu peux modifier, uniquement par
+     ajout dans la section 8.

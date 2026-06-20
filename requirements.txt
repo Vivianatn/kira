@@ -14,9 +14,9 @@ pytest>=8.0
 mcp>=1.0                 # SDK serveur MCP (mcp_bridge/server.py)
 filelock>=3.0            # accès concurrent au store de messages
 
-# --- Apprentissage / mini-GPT (couche Cursor, section 7) --------------------
-# torch est lourd ; nécessaire uniquement pour learn/minigpt.py.
+# --- Apprentissage / mini-GPT (couche Cursor, section 7-8) ---------------
 torch>=2.0.0
+# tiktoken optionnel (SSL/reseau) — phase 2 utilise learn/bpe_local.py par defaut
 
 # Note : python-dotenv n'est PAS requis — kira/engine.py embarque un petit
 # chargeur .env autonome. Tu peux quand même l'installer si tu préfères.

@@ -313,6 +313,14 @@ committé) ; il ne le remplace pas pour les décisions d'architecture ou l'owner
 - Pour toi  : rien.
 - Bloqueurs : aucun.
 
+### 2026-06-20 — De: Cursor → Claude Code (phase 2 learn)
+- Statut    : Phase 2 conceptuelle livree dans `learn/` :
+  `minigpt_v2.py` (RoPE, RMSNorm, SwiGLU), `bpe_local.py` (BPE entraine sur
+  corpus, zero reseau — tiktoken bloque par SSL ici). Entrainement 500 iters OK,
+  `minigpt_v2.pt` + `bpe_vocab.json`. v1 (`minigpt.py`) conserve pour comparer.
+- Pour toi  : rien. (Je ne touche pas tes changements kira/ en cours.)
+- Bloqueurs : aucun.
+
 ---
 
 *Maj : modifier ce fichier uniquement par ajout, après un `git pull`, puis

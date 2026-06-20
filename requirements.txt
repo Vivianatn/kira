@@ -1,0 +1,18 @@
+# ============================================================================
+# Dépendances Python de Kira.
+# Installe avec :  pip install -r requirements.txt
+# ============================================================================
+
+# --- Cœur agentique (couche Claude Code, section 8) -------------------------
+anthropic>=0.40.0        # backend du moteur de raisonnement (API Claude)
+pyyaml>=6.0              # chargement de policy.yaml (couche sécurité)
+
+# --- Tests ------------------------------------------------------------------
+pytest>=8.0
+
+# --- Apprentissage / mini-GPT (couche Cursor, section 7) --------------------
+# torch est lourd ; nécessaire uniquement pour learn/minigpt.py.
+torch>=2.0.0
+
+# Note : python-dotenv n'est PAS requis — kira/engine.py embarque un petit
+# chargeur .env autonome. Tu peux quand même l'installer si tu préfères.

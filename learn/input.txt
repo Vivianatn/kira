@@ -1,0 +1,33 @@
+Kira est un assistant virtuel agentique. Il dialogue, agit sur l'ordinateur,
+lit et ecrit des fichiers, cherche sur le web, et memorise ses interactions.
+La securite est primordiale : chaque action passe par une couche d'enforcement.
+L'attention multi-tetes permet au modele de ponderer les tokens precedents.
+Le masque causal empeche le modele de voir le futur lors de la generation.
+Les connexions residuelles stabilisent l'entraînement en profondeur.
+AdamW optimise les poids du reseau de neurones transformer.
+La boucle ReAct alterne entre reflexion, action et observation.
+Thought, Action, Observation, Answer : le cycle de l'agent agentique.
+Un mini-GPT decoder-only predit le prochain token caractere par caractere.
+Les embeddings transforment chaque identifiant en vecteur dense.
+La normalisation de couche stabilise les activations internes.
+Le feed-forward reseau reflechit sur l'information aggregee par l'attention.
+Entrainer un grand modele de langage demande des ressources considerables.
+Adapter un modele open-source est une approche realiste pour un assistant local.
+La memoire court terme garde le contexte de la conversation actuelle.
+La memoire long terme utilise une base vectorielle et du RAG pour retrouver l'historique.
+Les outils MCP permettent d'etendre les capacites de l'agent dynamiquement.
+Human-in-the-loop : les actions sensibles demandent une approbation humaine.
+Allowlist plutot que denylist : seules les actions explicites sont autorisees.
+Le GPU NVIDIA MX350 a deux gigaoctets de VRAM, insuffisant pour un modele sept milliards.
+L'API externe sert de moteur de raisonnement, la couche agentique tourne en local.
+Ollama permet d'experimenter avec un petit modele quantifie sur CPU.
+PyTorch est le framework de deep learning utilise pour ce projet pedagogique.
+Comprendre chaque rouage du transformer est l'objectif du mini-GPT.
+L'auto-regression genere un token, l'ajoute a la sequence, et recommence.
+La temperature controle la creativite lors de l'echantillonnage des tokens.
+Cross-entropy mesure la perte entre la prediction et le token reel suivant.
+Le dropout reduit le surapprentissage en desactivant aleatoirement des neurones.
+Six couches transformer empilent des representations plus abstraites du texte.
+Six tetes d'attention capturent differents types de relations entre tokens.
+Une fenetre de contexte de cent vingt-huit caracteres limite la sequence.
+Kira apprend, agit, et s'ameliore dans un cadre securise et encadre.

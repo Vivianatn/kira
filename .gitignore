@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Réglages locaux Claude Code (machine-spécifiques)
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Runtime Python « embeddable » local (installé hors MSI, non versionné)
+.python/
+
+# Modèles entraînés
+*.pt
+
+# Workspace agent (géré par Claude Code)
+workspace/

@@ -1,0 +1,57 @@
+# ============================================================================
+# Politique de sécurité de Kira — couche d'enforcement (ALLOWLIST)
+# ============================================================================
+# Principe : tout ce qui n'est PAS explicitement autorisé ici est REFUSÉ.
+# On n'utilise jamais de denylist (contournable). Ce fichier est la source
+# de vérité de ce que l'agent a le droit de faire.
+#
+# Phase actuelle (1-2) : seuls deux outils SÛRS sont activés (web, files en
+# lecture seule). Aucun lancement de programme, aucune exécution de code :
+# ces capacités n'arriveront qu'en phase 3, sandbox + validation incluses.
+# ============================================================================
+
+version: 1
+
+# ---------------------------------------------------------------------------
+# Outils autorisés. Un outil absent de cette liste est bloqué, même si le
+# moteur de raisonnement (le LLM) tente de l'appeler.
+# ---------------------------------------------------------------------------
+allowed_tools:
+  - web
+  - files
+
+# ---------------------------------------------------------------------------
+# Configuration spécifique à chaque outil.
+# ---------------------------------------------------------------------------
+tools:
+  files:
+    # Seul répertoire accessible par l'outil fichiers. Tout accès en dehors
+    # de cette racine est refusé (protection contre les ../ et chemins absolus).
+    root: workspace
+    # read_only : aucune écriture possible pour l'instant.
+    mode: read_only
+    # Taille max d'un fichier lu (octets) pour éviter de saturer le contexte.
+    max_bytes: 100000
+
+  web:
+    # Nombre max de résultats remontés par recherche.
+    max_results: 5
+    # Fournisseur de recherche. "duckduckgo" ne nécessite aucune clé API.
+    provider: duckduckgo
+
+# ---------------------------------------------------------------------------
+# Actions sensibles nécessitant une validation humaine explicite avant
+# exécution (human-in-the-loop). Format : { tool: <nom>, action: <action> }.
+# Vide pour l'instant : aucune action destructive n'est exposée.
+# Exemples futurs (phase 3+) :
+#   - { tool: system, action: run_program }
+#   - { tool: files,  action: delete }
+# ---------------------------------------------------------------------------
+require_human_approval: []
+
+# ---------------------------------------------------------------------------
+# Limites de la boucle ReAct (anti-emballement).
+# ---------------------------------------------------------------------------
+agent:
+  # Nombre max de cycles Thought -> Action -> Observation avant arrêt forcé.
+  max_steps: 6

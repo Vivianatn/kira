@@ -42,6 +42,10 @@ Lis `COLLABORATION.md` (fiche directrice complète) en début de session.
 - **Docker OPÉRATIONNEL** : sandbox via Docker dans WSL (Ubuntu-24.04) ; `execute_code`
   fonctionne (conteneur jetable confiné), derrière validation humaine. Voir
   mémoire projet [[kira-docker-wsl]].
-- Suite : **52 tests verts**. À faire : phase 5 (Kira crée ses outils),
-  auto-amélioration encadrée (niveau C, human-in-the-loop), pull `nomic-embed-text`
-  pour RAG sémantique.
+- **Phase 5** : `kira/skills.py` + outil `skills` — Kira propose un outil (pending),
+  l'humain l'active (`approve`), exécution en sandbox Docker. Vérifié bout-en-bout.
+- **Auto-amélioration** : `kira/improve.py` — mineur+tests verts -> auto ; important/
+  fichier protégé/tests rouges -> proposition pour validation humaine. Fitness = pytest.
+  NON câblé comme outil agent (le 3B ne peut pas émettre un fichier complet fiable).
+- Suite : **66 tests verts**. À faire : RAG sémantique (`nomic-embed-text`),
+  câbler self_improve en outil si voulu, durcir/observer.

@@ -101,6 +101,20 @@ class SelfImprover:
         return sum(1 for ln in diff if ln and ln[0] in "+-" and ln[:2] not in ("+++", "---"))
 
     # ------------------------------------------------------------------ #
+    def view(self, rel_path: str) -> str | None:
+        """Renvoie le contenu actuel d'un fichier éditable, ou None si interdit.
+
+        Sert à Kira pour lire son code avant de proposer une modification.
+        """
+        try:
+            rel = self._rel(rel_path)
+        except ValueError:
+            return None
+        if not self._is_editable(rel):
+            return None
+        target = self.root / rel
+        return target.read_text(encoding="utf-8") if target.exists() else None
+
     def propose(self, rel_path: str, new_content: str) -> ImprovementResult:
         """Tente d'appliquer une modification, sous tous les garde-fous."""
         try:

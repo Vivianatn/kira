@@ -21,6 +21,7 @@ allowed_tools:
   - files
   - memory   # phase 4 — Kira retient/retrouve des faits (sûr, local)
   - skills   # phase 5 — Kira propose des outils (activation humaine, exéc. sandbox)
+  - self_improve  # niveau C — Kira améliore son code (mineur auto si tests verts)
   - system   # phase 3 — INERTE par défaut (voir tools.system ci-dessous)
 
 # ---------------------------------------------------------------------------
@@ -41,6 +42,13 @@ tools:
     max_results: 5
     # Fournisseur de recherche. "duckduckgo" ne nécessite aucune clé API.
     provider: duckduckgo
+
+  # ---- Auto-amélioration (niveau C) ----
+  self_improve:
+    # Une modification <= ce nombre de lignes (et hors fichier protégé) est
+    # appliquée automatiquement SI la suite de tests reste verte. Au-delà, ou
+    # pour un fichier de sécurité, la modification exige une validation humaine.
+    max_minor_lines: 10
 
   # ---- Outil système (phase 3) — SÉCURITÉ D'ABORD, inerte par défaut ----
   system:

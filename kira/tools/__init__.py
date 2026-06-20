@@ -56,6 +56,18 @@ def build_registry(security: EnforcementLayer, memory: Any | None = None) -> dic
         store = SkillStore(security.project_root)
         available["skills"] = lambda: SkillsTool(store, security)
 
+    if "self_improve" in security.allowed_tools:
+        from kira.improve import SelfImprover
+        from kira.tools.improve_tool import SelfImproveTool
+
+        cfg = security.tool_config("self_improve")
+        improver = SelfImprover(
+            security.project_root,
+            max_minor_lines=int(cfg.get("max_minor_lines", 10)),
+            audit_log=security.project_root / ".kira_memory" / "improve_audit.jsonl",
+        )
+        available["self_improve"] = lambda: SelfImproveTool(improver, security)
+
     registry: dict[str, Tool] = {}
     for name in security.allowed_tools:
         factory = available.get(name)

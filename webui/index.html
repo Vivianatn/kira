@@ -91,10 +91,7 @@
     </div>
     <div class="spacer"></div>
     <div>
-      <div class="toggle" id="modelToggle">
-        <button data-key="fast">⚡ Rapide</button>
-        <button data-key="smart">🧠 Intelligent</button>
-      </div>
+      <div class="toggle" id="modelToggle"></div>
       <div class="model-note" id="modelNote"></div>
     </div>
   </header>
@@ -210,6 +207,15 @@
     try {
       const data = await (await fetch('/api/model')).json();
       profiles = data.profiles || [];
+      // Construit les boutons dynamiquement depuis les profils du serveur.
+      modelToggle.innerHTML = '';
+      profiles.forEach(p => {
+        const b = document.createElement('button');
+        b.dataset.key = p.key;
+        b.textContent = p.label;
+        b.title = p.note || '';
+        modelToggle.appendChild(b);
+      });
       paintModel(data.current);
     } catch (e) { /* serveur pas prêt */ }
   }
@@ -229,11 +235,12 @@
       const data = await res.json();
       if (data.current) {
         paintModel(data.current);
-        if (p.key === 'smart') {
-          addMessage('assistant', '🧠 Mode Intelligent activé (qwen2.5:7b). Attention : sur ce PC les réponses seront lentes (~30-60s).');
-        } else {
-          addMessage('assistant', '⚡ Mode Rapide activé (qwen2.5:3b).');
-        }
+        const msgs = {
+          fast: '⚡ Mode Rapide (qwen2.5:3b) — réactif, utilise les outils.',
+          smart: '🧠 Mode Intelligent (qwen2.5:7b) — meilleur, mais lent sur ce PC (~30-60s).',
+          reason: '🤔 Mode Raisonneur (deepseek-r1) — réfléchit davantage, mais SANS outils (chat seul, pas de fichiers/web/mémoire active).'
+        };
+        addMessage('assistant', msgs[p.key] || ('Modèle : ' + data.current));
       }
     } finally {
       modelToggle.querySelectorAll('button').forEach(b => b.disabled = false);

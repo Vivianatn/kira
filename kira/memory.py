@@ -61,6 +61,8 @@ class Embedder(Protocol):
 
     def embed(self, text: str) -> list[float]: ...
 
+    def embed_query(self, text: str) -> list[float]: ...
+
 
 class HashEmbedder:
     """Embedder déterministe sans dépendance (sac-de-mots hashé, L2-normalisé).
@@ -79,9 +81,19 @@ class HashEmbedder:
             vec[idx] += 1.0
         return vec
 
+    # Pour HashEmbedder, requête et document s'encodent pareil.
+    def embed_query(self, text: str) -> list[float]:
+        return self.embed(text)
+
 
 class OllamaEmbedder:
-    """Embeddings via Ollama (`/api/embeddings`). Modèle local, ex. nomic-embed-text."""
+    """Embeddings via Ollama (`/api/embeddings`). Modèle local, ex. nomic-embed-text.
+
+    nomic-embed-text exige des PRÉFIXES de tâche pour bien fonctionner :
+    `search_document:` pour les textes stockés, `search_query:` pour les requêtes.
+    Sans eux, la similarité est incohérente. On les applique par défaut (vides
+    si tu utilises un autre modèle qui n'en veut pas).
+    """
 
     def __init__(
         self,
@@ -89,13 +101,17 @@ class OllamaEmbedder:
         *,
         host: str | None = None,
         timeout: int = 60,
+        doc_prefix: str = "search_document: ",
+        query_prefix: str = "search_query: ",
     ) -> None:
         self.model = model
         self.host = host or "http://localhost:11434"
         self.timeout = timeout
+        self.doc_prefix = doc_prefix
+        self.query_prefix = query_prefix
         self.dim = 0  # découvert au premier appel
 
-    def embed(self, text: str) -> list[float]:
+    def _call(self, text: str) -> list[float]:
         payload = json.dumps({"model": self.model, "prompt": text}).encode("utf-8")
         req = urllib.request.Request(
             f"{self.host}/api/embeddings",
@@ -108,6 +124,14 @@ class OllamaEmbedder:
         emb = data.get("embedding", [])
         self.dim = len(emb)
         return emb
+
+    def embed(self, text: str) -> list[float]:
+        """Encode un texte à STOCKER (document)."""
+        return self._call(self.doc_prefix + text)
+
+    def embed_query(self, text: str) -> list[float]:
+        """Encode une REQUÊTE de recherche."""
+        return self._call(self.query_prefix + text)
 
 
 # --------------------------------------------------------------------------- #
@@ -218,10 +242,15 @@ class LongTermMemory:
     def search(self, query: str, k: int = 3, min_score: float = 0.0) -> list[Recall]:
         if not self.items:
             return []
-        qv = self.embedder.embed(query)
+        # Encode la requête (préfixe dédié si l'embedder le gère, ex. nomic).
+        embed_query = getattr(self.embedder, "embed_query", self.embedder.embed)
+        qv = embed_query(query)
         scored = [
             Recall(it.text, cosine(qv, it.embedding), it.metadata, it.id)
             for it in self.items
+            # Robustesse : on ignore les souvenirs encodés avec une autre
+            # dimension (ex. ancien store hash si on a changé d'embedder).
+            if len(it.embedding) == len(qv)
         ]
         scored = [r for r in scored if r.score > min_score]
         scored.sort(key=lambda r: r.score, reverse=True)

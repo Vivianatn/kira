@@ -45,8 +45,9 @@ _agent = Agent(_engine, _security, memory=_memory)
 
 # Profils de modèle proposés par le bouton de bascule de l'interface.
 MODEL_PROFILES = [
-    {"key": "fast", "label": "Rapide", "model": "qwen2.5:3b", "note": "léger, réactif"},
-    {"key": "smart", "label": "Intelligent", "model": "qwen2.5:7b", "note": "meilleur mais lent sur ce PC"},
+    {"key": "fast", "label": "⚡ Rapide", "model": "qwen2.5:3b", "note": "léger, réactif, utilise les outils"},
+    {"key": "smart", "label": "🧠 Intelligent", "model": "qwen2.5:7b", "note": "meilleur mais lent sur ce PC"},
+    {"key": "reason", "label": "🤔 Raisonneur", "model": "deepseek-r1:1.5b", "note": "réfléchit plus, mais SANS outils (chat seul)"},
 ]
 
 

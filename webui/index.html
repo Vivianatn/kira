@@ -20,6 +20,15 @@
     padding: 14px 20px; border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 12px; background: var(--panel);
   }
+  header .spacer { flex: 1; }
+  .toggle { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 2px; }
+  .toggle button {
+    border: none; background: transparent; color: var(--muted); cursor: pointer;
+    padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  }
+  .toggle button.on { background: var(--user); color: #fff; }
+  .toggle button:disabled { opacity: .6; cursor: wait; }
+  .model-note { font-size: 11px; color: var(--muted); margin-top: 3px; text-align: right; }
   header .logo {
     width: 32px; height: 32px; border-radius: 8px;
     background: linear-gradient(135deg, var(--accent), var(--user));
@@ -79,6 +88,14 @@
     <div>
       <h1>Kira</h1>
       <div class="sub">assistant agentique local</div>
+    </div>
+    <div class="spacer"></div>
+    <div>
+      <div class="toggle" id="modelToggle">
+        <button data-key="fast">⚡ Rapide</button>
+        <button data-key="smart">🧠 Intelligent</button>
+      </div>
+      <div class="model-note" id="modelNote"></div>
     </div>
   </header>
 
@@ -174,6 +191,56 @@
       input.focus();
     }
   }
+
+  // --- Bascule de modèle (Rapide / Intelligent) ---
+  const modelToggle = document.getElementById('modelToggle');
+  const modelNote = document.getElementById('modelNote');
+  let profiles = [];
+
+  function paintModel(current) {
+    modelToggle.querySelectorAll('button').forEach(b => {
+      const p = profiles.find(x => x.key === b.dataset.key);
+      b.classList.toggle('on', p && p.model === current);
+    });
+    const active = profiles.find(p => p.model === current);
+    modelNote.textContent = active ? active.note : '';
+  }
+
+  async function loadModel() {
+    try {
+      const data = await (await fetch('/api/model')).json();
+      profiles = data.profiles || [];
+      paintModel(data.current);
+    } catch (e) { /* serveur pas prêt */ }
+  }
+
+  modelToggle.addEventListener('click', async e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const p = profiles.find(x => x.key === btn.dataset.key);
+    if (!p) return;
+    modelToggle.querySelectorAll('button').forEach(b => b.disabled = true);
+    try {
+      const res = await fetch('/api/model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: p.model })
+      });
+      const data = await res.json();
+      if (data.current) {
+        paintModel(data.current);
+        if (p.key === 'smart') {
+          addMessage('assistant', '🧠 Mode Intelligent activé (qwen2.5:7b). Attention : sur ce PC les réponses seront lentes (~30-60s).');
+        } else {
+          addMessage('assistant', '⚡ Mode Rapide activé (qwen2.5:3b).');
+        }
+      }
+    } finally {
+      modelToggle.querySelectorAll('button').forEach(b => b.disabled = false);
+    }
+  });
+
+  loadModel();
 
   send.addEventListener('click', sendMessage);
   input.addEventListener('keydown', e => {

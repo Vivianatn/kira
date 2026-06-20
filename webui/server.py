@@ -43,6 +43,29 @@ _engine = Engine.from_config()
 _memory = build_memory(store_path=PROJECT_ROOT / ".kira_memory" / "store.jsonl")
 _agent = Agent(_engine, _security, memory=_memory)
 
+# Profils de modèle proposés par le bouton de bascule de l'interface.
+MODEL_PROFILES = [
+    {"key": "fast", "label": "Rapide", "model": "qwen2.5:3b", "note": "léger, réactif"},
+    {"key": "smart", "label": "Intelligent", "model": "qwen2.5:7b", "note": "meilleur mais lent sur ce PC"},
+]
+
+
+def _current_model() -> str:
+    backend = _agent.engine.backend
+    return getattr(backend, "model", "?")
+
+
+def _set_model(model: str) -> bool:
+    """Bascule le modèle du backend à chaud (Ollama/Anthropic ont un .model)."""
+    allowed = {p["model"] for p in MODEL_PROFILES}
+    if model not in allowed:
+        return False
+    backend = _agent.engine.backend
+    if not hasattr(backend, "model"):
+        return False
+    backend.model = model
+    return True
+
 
 class KiraHandler(BaseHTTPRequestHandler):
     def _send(self, code: int, body: str, ctype: str = "application/json") -> None:
@@ -56,10 +79,30 @@ class KiraHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 (API imposée par http.server)
         if self.path in ("/", "/index.html"):
             self._send(200, INDEX_HTML, "text/html")
+        elif self.path == "/api/model":
+            self._send(
+                200,
+                json.dumps(
+                    {"current": _current_model(), "profiles": MODEL_PROFILES},
+                    ensure_ascii=False,
+                ),
+            )
         else:
             self._send(404, json.dumps({"error": "not found"}))
 
     def do_POST(self) -> None:  # noqa: N802
+        if self.path == "/api/model":
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                payload = json.loads(self.rfile.read(length) or b"{}")
+                model = str(payload.get("model", ""))
+                if _set_model(model):
+                    self._send(200, json.dumps({"current": _current_model()}))
+                else:
+                    self._send(400, json.dumps({"error": f"modèle non autorisé: {model}"}))
+            except Exception as exc:  # noqa: BLE001
+                self._send(500, json.dumps({"error": str(exc)}, ensure_ascii=False))
+            return
         if self.path != "/api/chat":
             self._send(404, json.dumps({"error": "not found"}))
             return

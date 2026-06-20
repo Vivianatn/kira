@@ -21,6 +21,11 @@ mcp_bridge/.data/
 # Mémoire long terme de Kira (souvenirs locaux, non versionnés)
 .kira_memory/
 
+# Auto-amélioration & skills (artefacts runtime)
+proposals/
+skills/pending/
+*.bak
+
 # Modèles entraînés
 *.pt
 

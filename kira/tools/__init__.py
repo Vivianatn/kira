@@ -49,6 +49,13 @@ def build_registry(security: EnforcementLayer, memory: Any | None = None) -> dic
 
         available["memory"] = lambda: MemoryTool(memory, security)
 
+    if "skills" in security.allowed_tools:
+        from kira.skills import SkillStore
+        from kira.tools.skill_tool import SkillsTool
+
+        store = SkillStore(security.project_root)
+        available["skills"] = lambda: SkillsTool(store, security)
+
     registry: dict[str, Tool] = {}
     for name in security.allowed_tools:
         factory = available.get(name)

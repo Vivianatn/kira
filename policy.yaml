@@ -20,6 +20,7 @@ allowed_tools:
   - web
   - files
   - memory   # phase 4 — Kira retient/retrouve des faits (sûr, local)
+  - skills   # phase 5 — Kira propose des outils (activation humaine, exéc. sandbox)
   - system   # phase 3 — INERTE par défaut (voir tools.system ci-dessous)
 
 # ---------------------------------------------------------------------------

@@ -37,8 +37,11 @@ Lis `COLLABORATION.md` (fiche directrice complète) en début de session.
 - **Phase 3 faite** : outil `system` (run_program allowlisté + execute_code en
   sandbox Docker, `kira/sandbox.py`). INERTE par défaut (allowlist vide, fail-closed
   sans Docker), validation humaine obligatoire.
-- **Phase 4 démarrée** : `kira/memory.py` (court terme + long terme RAG, embedders
-  Ollama/hash). Pas encore branchée dans l'agent.
-- Suite : **45 tests verts**. Prochaines pistes : brancher la mémoire dans l'agent,
-  pull `nomic-embed-text` pour du vrai RAG sémantique, installer Docker pour activer
-  execute_code.
+- **Phase 4** : `kira/memory.py` branchée dans l'agent (court terme + RAG). Outil
+  `memory` (remember/recall) + apprentissage auto des erreurs (leçons en mémoire).
+- **Docker OPÉRATIONNEL** : sandbox via Docker dans WSL (Ubuntu-24.04) ; `execute_code`
+  fonctionne (conteneur jetable confiné), derrière validation humaine. Voir
+  mémoire projet [[kira-docker-wsl]].
+- Suite : **52 tests verts**. À faire : phase 5 (Kira crée ses outils),
+  auto-amélioration encadrée (niveau C, human-in-the-loop), pull `nomic-embed-text`
+  pour RAG sémantique.

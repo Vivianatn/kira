@@ -52,20 +52,21 @@ def test_write_blocked_in_read_only_mode(security):
 
 
 def test_human_approval_flagging(project):
-    # On enrichit la politique avec une action sensible et on vérifie le flag.
+    # On enrichit la politique avec un outil sensible générique (pas 'system',
+    # qui a désormais ses propres règles fines) et on vérifie le flag d'approbation.
     policy_path = project / "policy.yaml"
     data = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
-    data["allowed_tools"].append("system")
-    data["require_human_approval"] = [{"tool": "system", "action": "run_program"}]
+    data["allowed_tools"].append("email")
+    data["require_human_approval"] = [{"tool": "email", "action": "send"}]
     policy_path.write_text(yaml.safe_dump(data), encoding="utf-8")
 
     sec = EnforcementLayer(policy_path=policy_path, project_root=project)
-    sensitive = Action(tool="system", name="run_program", params={})
+    sensitive = Action(tool="email", name="send", params={})
     assert sec.is_allowed(sensitive) is True
     assert sec.requires_human_approval(sensitive) is True
 
     # Une autre action du même outil, non listée, ne requiert pas d'aval.
-    other = Action(tool="system", name="status", params={})
+    other = Action(tool="email", name="draft", params={})
     assert sec.requires_human_approval(other) is False
 
 

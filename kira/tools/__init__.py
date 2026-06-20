@@ -35,11 +35,13 @@ def build_registry(security: EnforcementLayer) -> dict[str, Tool]:
     privilège appliqué dès la construction.
     """
     from kira.tools.files import FilesTool
+    from kira.tools.system import SystemTool
     from kira.tools.web import WebTool
 
     available = {
         "files": lambda: FilesTool(security),
         "web": lambda: WebTool(security),
+        "system": lambda: SystemTool(security),
     }
 
     registry: dict[str, Tool] = {}

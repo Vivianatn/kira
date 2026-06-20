@@ -19,6 +19,7 @@ version: 1
 allowed_tools:
   - web
   - files
+  - system   # phase 3 — INERTE par défaut (voir tools.system ci-dessous)
 
 # ---------------------------------------------------------------------------
 # Configuration spécifique à chaque outil.
@@ -39,15 +40,31 @@ tools:
     # Fournisseur de recherche. "duckduckgo" ne nécessite aucune clé API.
     provider: duckduckgo
 
+  # ---- Outil système (phase 3) — SÉCURITÉ D'ABORD, inerte par défaut ----
+  system:
+    # Lancement de programmes : ALLOWLIST stricte par nom de programme.
+    # VIDE par défaut => aucun programme lançable tant que tu n'en ajoutes pas
+    # explicitement ici (ex. - notepad). Pas de shell, args en liste.
+    allowed_commands: []
+    program_timeout: 30
+    # Exécution de code : UNIQUEMENT en sandbox Docker éphémère (jamais l'hôte).
+    # Fail-closed : si Docker est absent, l'exécution est refusée.
+    code_execution:
+      enabled: true
+      sandbox: docker
+      image: python:3.12-slim
+      timeout: 10
+      network: none      # aucun réseau dans le conteneur
+      memory: 256m
+
 # ---------------------------------------------------------------------------
 # Actions sensibles nécessitant une validation humaine explicite avant
 # exécution (human-in-the-loop). Format : { tool: <nom>, action: <action> }.
 # Vide pour l'instant : aucune action destructive n'est exposée.
-# Exemples futurs (phase 3+) :
-#   - { tool: system, action: run_program }
-#   - { tool: files,  action: delete }
 # ---------------------------------------------------------------------------
-require_human_approval: []
+require_human_approval:
+  - { tool: system, action: run_program }
+  - { tool: system, action: execute_code }
 
 # ---------------------------------------------------------------------------
 # Limites de la boucle ReAct (anti-emballement).

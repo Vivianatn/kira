@@ -174,8 +174,36 @@ class EnforcementLayer:
         """Règles fines propres à un outil. Renvoie (autorisé, raison)."""
         if action.tool == "files":
             return self._check_files(action)
+        if action.tool == "system":
+            return self._check_system(action)
         # Pas de règle fine pour les autres outils pour l'instant.
         return True, "ok"
+
+    def _check_system(self, action: Action) -> tuple[bool, str]:
+        """Phase 3 — outil système. Sécurité d'abord, fail-closed partout.
+
+        - run_program : seul un programme de l'ALLOWLIST (par nom exact) peut être
+          lancé. Allowlist vide par défaut => rien n'est lançable.
+        - execute_code : autorisé par la politique mais l'exécution réelle exige
+          un sandbox Docker (vérifié au runtime par l'outil). Jamais sur l'hôte.
+        """
+        cfg = self.tool_config("system")
+
+        if action.name == "run_program":
+            command = action.params.get("command")
+            allowed = cfg.get("allowed_commands", []) or []
+            if not command:
+                return False, "aucune commande fournie"
+            if command not in allowed:
+                return False, f"programme '{command}' hors allowlist system.allowed_commands"
+            return True, "ok"
+
+        if action.name == "execute_code":
+            if not cfg.get("code_execution", {}).get("enabled", False):
+                return False, "exécution de code désactivée (system.code_execution.enabled)"
+            return True, "ok"
+
+        return False, f"action system inconnue : '{action.name}'"
 
     def _check_files(self, action: Action) -> tuple[bool, str]:
         cfg = self.tool_config("files")

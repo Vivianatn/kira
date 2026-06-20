@@ -90,3 +90,34 @@ def test_new_file_minor_applied(tmp_path):
     res = imp.propose("kira/bar.py", "VALUE = 42\n")
     assert res.applied is True
     assert (root / "kira" / "bar.py").exists()
+
+
+def test_unrestricted_applies_large_change(tmp_path):
+    # En mode illimité, un GROS changement non protégé s'applique si tests verts.
+    root = _project(tmp_path)
+    imp = SelfImprover(
+        root, max_minor_lines=2, unrestricted=True, test_runner=lambda: (True, "")
+    )
+    big = "def f():\n" + "".join(f"    x{i} = {i}\n" for i in range(50)) + "    return 1\n"
+    res = imp.propose("kira/foo.py", big)
+    assert res.applied is True
+    assert "x49" in (root / "kira" / "foo.py").read_text(encoding="utf-8")
+
+
+def test_unrestricted_still_protects_security_files(tmp_path):
+    # Même en mode illimité, les fichiers de sécurité restent gardés.
+    root = _project(tmp_path)
+    imp = SelfImprover(root, unrestricted=True, test_runner=lambda: (True, ""))
+    res = imp.propose("kira/security.py", "# garde-fou\nX = 2\n")
+    assert res.applied is False
+    assert res.needs_approval is True
+    assert "X = 1" in (root / "kira" / "security.py").read_text(encoding="utf-8")
+
+
+def test_unrestricted_still_reverts_on_test_failure(tmp_path):
+    # Le test reste la garde : un changement qui casse est annulé, même illimité.
+    root = _project(tmp_path)
+    imp = SelfImprover(root, unrestricted=True, test_runner=lambda: (False, ""))
+    res = imp.propose("kira/foo.py", "def f():\n    return 2\n")
+    assert res.applied is False
+    assert "return 1" in (root / "kira" / "foo.py").read_text(encoding="utf-8")

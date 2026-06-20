@@ -50,10 +50,15 @@ tools:
 
   # ---- Auto-amélioration (niveau C) ----
   self_improve:
-    # Une modification <= ce nombre de lignes (et hors fichier protégé) est
-    # appliquée automatiquement SI la suite de tests reste verte. Au-delà, ou
-    # pour un fichier de sécurité, la modification exige une validation humaine.
+    # unrestricted: true => Kira applique TOUTE modification de son code (quelle
+    # que soit la taille) sans validation, tant que la suite de tests reste verte.
+    # Le test reste la seule garde-fou : il empêche Kira de se casser elle-même.
+    unrestricted: true
+    # Ignoré en mode unrestricted ; sinon, seuil d'auto-application.
     max_minor_lines: 10
+    # Restent protégés (validation humaine), car ils gouvernent ce que Kira peut
+    # faire à la MACHINE : security.py, sandbox.py, policy.yaml, agent.py,
+    # tools/system.py, improve.py. (Définis dans kira/improve.py PROTECTED.)
 
   # ---- Outil système (phase 3) — SÉCURITÉ D'ABORD, inerte par défaut ----
   system:

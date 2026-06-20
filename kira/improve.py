@@ -79,11 +79,17 @@ class SelfImprover:
         project_root: str | os.PathLike[str],
         *,
         max_minor_lines: int = 10,
+        unrestricted: bool = False,
         test_runner: TestRunner | None = None,
         audit_log: str | os.PathLike[str] | None = None,
     ) -> None:
         self.root = Path(project_root).resolve()
         self.max_minor_lines = max_minor_lines
+        # unrestricted : Kira applique toute modification (quelle que soit la
+        # taille) tant que les tests passent. SEULE exception non négociable :
+        # les fichiers PROTECTED (qui gouvernent ce que Kira peut faire à la
+        # machine) demandent toujours une validation humaine.
+        self.unrestricted = unrestricted
         self.test_runner = test_runner or pytest_runner(self.root)
         self.audit_log = Path(audit_log).resolve() if audit_log else None
 
@@ -137,7 +143,12 @@ class SelfImprover:
 
         diff_lines = self._diff_lines(old_content, new_content)
         protected = rel in PROTECTED
-        minor = (diff_lines <= self.max_minor_lines) and not protected
+        # En mode unrestricted, toute modif d'un fichier NON protégé s'applique
+        # (peu importe la taille). Les fichiers protégés restent gardés.
+        if self.unrestricted:
+            auto_ok = not protected
+        else:
+            auto_ok = (diff_lines <= self.max_minor_lines) and not protected
 
         # On met la modification en scène (avec sauvegarde) pour lancer les tests.
         backup = target.with_suffix(target.suffix + ".bak")
@@ -160,18 +171,25 @@ class SelfImprover:
                 "tests en échec : modification annulée (fitness)"))
 
         # Tests verts.
-        if minor:
-            # Mineur + non protégé + tests OK -> appliqué automatiquement.
+        if auto_ok:
+            # Non protégé + tests OK -> appliqué automatiquement (taille libre
+            # en mode unrestricted).
             if backup.exists():
                 backup.unlink()
+            mode = "appliquée (mode illimité, tests OK)" if self.unrestricted else \
+                "mineure appliquée automatiquement (tests OK)"
             return self._log(rel, ImprovementResult(
-                True, False, True, diff_lines,
-                "modification mineure appliquée automatiquement (tests OK)"))
+                True, False, True, diff_lines, f"modification {mode}"))
 
-        # Important ou protégé : on n'applique PAS, on revient et on propose.
+        # Protégé (toujours), ou trop gros hors mode unrestricted : on n'applique
+        # PAS, on revient et on propose pour validation humaine.
         self._restore(target, backup, existed)
         proposal = self._write_proposal(rel, new_content)
-        reason = "fichier protégé" if protected else f"modification importante (>{self.max_minor_lines} lignes)"
+        reason = (
+            "fichier de sécurité protégé"
+            if protected
+            else f"modification importante (>{self.max_minor_lines} lignes)"
+        )
         return self._log(rel, ImprovementResult(
             False, True, True, diff_lines,
             f"{reason} : validation humaine requise (proposition enregistrée)",

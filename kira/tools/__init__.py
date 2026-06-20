@@ -64,6 +64,7 @@ def build_registry(security: EnforcementLayer, memory: Any | None = None) -> dic
         improver = SelfImprover(
             security.project_root,
             max_minor_lines=int(cfg.get("max_minor_lines", 10)),
+            unrestricted=bool(cfg.get("unrestricted", False)),
             audit_log=security.project_root / ".kira_memory" / "improve_audit.jsonl",
         )
         available["self_improve"] = lambda: SelfImproveTool(improver, security)

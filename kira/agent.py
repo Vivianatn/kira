@@ -76,13 +76,16 @@ class Agent:
     ) -> None:
         self.engine = engine
         self.security = security
-        self.tools = tools if tools is not None else build_registry(security)
-        self.max_steps = max_steps if max_steps is not None else security.max_steps
-        self.approval_handler = approval_handler or deny_all_approvals
-        self._schemas = tool_schemas(self.tools)
         # Mémoire optionnelle : court terme (conversation) + long terme (RAG).
         self.memory = memory
         self.recall_k = recall_k
+        # L'outil `memory` n'est branché que si une mémoire est disponible.
+        self.tools = (
+            tools if tools is not None else build_registry(security, memory)
+        )
+        self.max_steps = max_steps if max_steps is not None else security.max_steps
+        self.approval_handler = approval_handler or deny_all_approvals
+        self._schemas = tool_schemas(self.tools)
 
     def run(self, user_input: str) -> AgentResult:
         messages: list[dict[str, Any]] = []
@@ -129,6 +132,9 @@ class Agent:
                 step.actions.append(
                     {"tool": call.name, "input": call.input, "observation": observation}
                 )
+                # Apprendre de ses erreurs : un refus/échec est mémorisé comme
+                # leçon, récupérable plus tard pour éviter de répéter l'erreur.
+                self._learn_from_failure(call, observation)
                 messages.append(
                     {
                         "role": "tool",
@@ -152,6 +158,23 @@ class Agent:
         self.memory.add_turn("assistant", answer)
         # Souvenir long terme de l'échange, récupérable plus tard par RAG.
         self.memory.remember(f"Q: {user_input}\nR: {answer}", kind="exchange")
+
+    def _learn_from_failure(self, call: ToolCall, observation: str) -> None:
+        """Mémorise un échec d'action comme LEÇON (auto-amélioration niveau A).
+
+        Quand un outil est refusé ou échoue, on enregistre une leçon que la
+        recherche par similarité pourra ressortir plus tard, pour que Kira
+        n'enchaîne pas la même erreur.
+        """
+        if self.memory is None:
+            return
+        low = observation.lower()
+        if low.startswith("refusé") or low.startswith("erreur"):
+            lesson = (
+                f"Leçon : l'appel à l'outil '{call.name}' avec {call.input} "
+                f"a échoué — {observation}. Éviter de répéter cette erreur."
+            )
+            self.memory.remember(lesson, kind="lesson", tool=call.name)
 
     # ------------------------------------------------------------------ #
     # Traitement d'un appel d'outil : LE point de contrôle sécurité.

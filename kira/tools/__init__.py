@@ -28,11 +28,12 @@ class Tool(Protocol):
     def to_action(self, params: dict[str, Any]) -> Action: ...
 
 
-def build_registry(security: EnforcementLayer) -> dict[str, Tool]:
+def build_registry(security: EnforcementLayer, memory: Any | None = None) -> dict[str, Tool]:
     """Construit le dict {nom: outil} pour les seuls outils de l'allowlist.
 
     On n'instancie QUE les outils autorisés par la politique : moindre
-    privilège appliqué dès la construction.
+    privilège appliqué dès la construction. L'outil `memory` n'est branché que
+    si une mémoire est fournie.
     """
     from kira.tools.files import FilesTool
     from kira.tools.system import SystemTool
@@ -43,6 +44,10 @@ def build_registry(security: EnforcementLayer) -> dict[str, Tool]:
         "web": lambda: WebTool(security),
         "system": lambda: SystemTool(security),
     }
+    if memory is not None:
+        from kira.tools.memory_tool import MemoryTool
+
+        available["memory"] = lambda: MemoryTool(memory, security)
 
     registry: dict[str, Tool] = {}
     for name in security.allowed_tools:

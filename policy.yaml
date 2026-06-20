@@ -19,6 +19,7 @@ version: 1
 allowed_tools:
   - web
   - files
+  - memory   # phase 4 — Kira retient/retrouve des faits (sûr, local)
   - system   # phase 3 — INERTE par défaut (voir tools.system ci-dessous)
 
 # ---------------------------------------------------------------------------
